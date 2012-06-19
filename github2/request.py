@@ -69,8 +69,6 @@ CURL_CERTS = False
 CA_CERTS = path.join(path.dirname(path.abspath(__file__)),
 			"DigiCert_High_Assurance_EV_Root_CA.crt")
 
-print CA_CERTS
-
 # Common missing entries from the HTTP status code dict, basically anything
 # GitHub reports that isn't basic HTTP/1.1.
 responses[422] = 'Unprocessable Entity'
