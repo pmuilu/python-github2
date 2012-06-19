@@ -64,27 +64,12 @@ LOGGER = logging.getLogger('github2.request')
 _HTTPLIB2_BUNDLE = path.realpath(path.dirname(httplib2.CA_CERTS))
 #: Whether github2 is using the system's certificates for SSL connections
 SYSTEM_CERTS = not _HTTPLIB2_BUNDLE.startswith(path.dirname(httplib2.__file__))
-CA_CERTS = None
 #: Whether github2 is using the cert's from the file given in $CURL_CA_BUNDLE
 CURL_CERTS = False
-if not SYSTEM_CERTS and sys.platform.startswith('linux'):
-    for cert_file in ['/etc/ssl/certs/ca-certificates.crt',
-                      '/etc/pki/tls/certs/ca-bundle.crt']:
-        if path.exists(cert_file):
-            CA_CERTS = cert_file
-            SYSTEM_CERTS = True
-            break
-elif not SYSTEM_CERTS and sys.platform.startswith('freebsd'):
-    if path.exists('/usr/local/share/certs/ca-root-nss.crt'):
-        CA_CERTS = '/usr/local/share/certs/ca-root-nss.crt'
-        SYSTEM_CERTS = True
-elif path.exists(getenv('CURL_CA_BUNDLE', '')):
-    CA_CERTS = getenv('CURL_CA_BUNDLE')
-    CURL_CERTS = True
-if not SYSTEM_CERTS and not CURL_CERTS:
-    CA_CERTS = path.join(path.dirname(path.abspath(__file__)),
-                         "DigiCert_High_Assurance_EV_Root_CA.crt")
+CA_CERTS = path.join(path.dirname(path.abspath(__file__)),
+			"DigiCert_High_Assurance_EV_Root_CA.crt")
 
+print CA_CERTS
 
 # Common missing entries from the HTTP status code dict, basically anything
 # GitHub reports that isn't basic HTTP/1.1.
@@ -172,12 +157,11 @@ class GithubRequest(object):
                 "api_format": self.api_format,
             }
         if proxy_host is None:
-            self._http = httplib2.Http(cache=cache)
+            self._http = httplib2.Http(cache=cache, ca_certs=CA_CERTS)
         else:
             proxy_info = httplib2.ProxyInfo(httplib2.socks.PROXY_TYPE_HTTP,
                                             proxy_host, proxy_port)
-            self._http = httplib2.Http(proxy_info=proxy_info, cache=cache)
-        self._http.ca_certs = CA_CERTS
+            self._http = httplib2.Http(proxy_info=proxy_info, cache=cache, ca_certs=CA_CERTS)
         if SYSTEM_CERTS:
             LOGGER.info('Using system certificates in %r', CA_CERTS)
         elif CURL_CERTS:
